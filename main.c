@@ -5,6 +5,8 @@
  * @date 
  */
 #include "types.h"
+#include "rcc.h"
+#include "gpio.h"
 
 extern uint32_t __idata_start__, __data_start__, __data_end__, __bss_start__, __bss_end__;
 
@@ -41,11 +43,30 @@ void startup(void) {
  * @brief メイン関数
  */
 int main(void) {
+    uint32_t temp;
 
-    /* TODO:最低限の初期化処理 */
+    int32_t i = -1;     // 初期値が設定されるかを確認
+    i = 0;              // スタック上の変数が変更できるかを確認
+
+    /* 最低限の初期化処理 */
+    // AHB有効化
+    RCC->AHB1ENR    = 0x0001;// GPIOAへクロックを供給
+    
+    /* PA5の初期設定 */
+    temp = GPIO_A->MODER;    // Read
+    temp |= (0x01 << 10);    // Modify(Output)
+    GPIO_A->MODER = temp;    // Write
+    //GPIO_A->MODER = 0x0400;
+    GPIO_A->OTYPER = 0x0000; // プッシュプル
+    GPIO_A->PUPDR  = 0x0000; // プルアップ,ダウンなし
+    GPIO_A->ODR    = 0x0000; // 出力ON
 
     while(1) {
-
+        /* Blink(PA5) */
+        for (i = 0; i < 100000; i++) {} // 時間待ち
+        GPIO_A->ODR |= (1 << 5); // 点灯
+        for (i = 0; i < 100000; i++) {} // 時間待ち
+        GPIO_A->ODR ^= (1 << 5); // 消灯
     }
 
 }
